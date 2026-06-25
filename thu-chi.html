@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Thu Chi</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --surface2: #242424;
+    --border: #2e2e2e;
+    --text: #f0f0f0;
+    --text-muted: #888;
+    --thu: #34c759;
+    --chi: #ff3b30;
+    --chuyen: #007aff;
+    --accent: #007aff;
+    --radius: 12px;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  /* PIN SCREEN */
+  #pin-screen {
+    position: fixed; inset: 0;
+    background: var(--bg);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 32px; z-index: 100;
+    padding: 40px 24px;
+  }
+
+  #pin-screen h1 { font-size: 22px; font-weight: 600; letter-spacing: 0.5px; }
+  #pin-screen p { font-size: 14px; color: var(--text-muted); margin-top: -24px; }
+
+  .pin-dots {
+    display: flex; gap: 16px;
+  }
+  .pin-dot {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    border: 2px solid var(--text-muted);
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .pin-dot.filled { background: var(--accent); border-color: var(--accent); }
+
+  .pin-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 12px; width: 100%; max-width: 280px;
+  }
+  .pin-btn {
+    background: var(--surface2);
+    border: none; border-radius: var(--radius);
+    color: var(--text);
+    font-size: 22px; font-weight: 500;
+    padding: 18px;
+    cursor: pointer;
+    transition: background 0.1s, transform 0.1s;
+    user-select: none;
+  }
+  .pin-btn:active { background: var(--border); transform: scale(0.95); }
+  .pin-btn.del { font-size: 18px; color: var(--text-muted); }
+  .pin-error { color: var(--chi); font-size: 13px; min-height: 18px; }
+
+  /* MAIN APP */
+  #app { display: none; flex-direction: column; flex: 1; padding: 16px; gap: 14px; padding-bottom: 32px; }
+  #app.visible { display: flex; }
+
+  /* HEADER */
+  .header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 0 4px;
+  }
+  .header-title { font-size: 20px; font-weight: 700; }
+  .header-time { font-size: 13px; color: var(--text-muted); }
+
+  /* LOẠI GIAO DỊCH */
+  .section-label {
+    font-size: 11px; font-weight: 600; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+
+  .loai-group {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+  }
+  .loai-btn {
+    border: 2px solid var(--border);
+    background: var(--surface);
+    border-radius: var(--radius);
+    color: var(--text-muted);
+    font-size: 15px; font-weight: 600;
+    padding: 14px 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+    user-select: none;
+  }
+  .loai-btn:active { transform: scale(0.97); }
+  .loai-btn.active-thu { background: #0d2d17; border-color: var(--thu); color: var(--thu); }
+  .loai-btn.active-chi { background: #2d0e0d; border-color: var(--chi); color: var(--chi); }
+  .loai-btn.active-chuyen { background: #0d1f2d; border-color: var(--chuyen); color: var(--chuyen); }
+
+  /* DANH MỤC */
+  .danhmuc-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+  }
+  .danhmuc-btn {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-size: 12px;
+    padding: 10px 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+    line-height: 1.3;
+    user-select: none;
+  }
+  .danhmuc-btn:active { transform: scale(0.97); }
+  .danhmuc-btn.selected { background: #1a2233; border-color: var(--accent); color: var(--accent); }
+
+  /* TÀI KHOẢN */
+  .taikhoan-group {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
+  }
+  .taikhoan-btn {
+    border: 2px solid var(--border);
+    background: var(--surface);
+    border-radius: var(--radius);
+    color: var(--text-muted);
+    font-size: 14px; font-weight: 600;
+    padding: 14px 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+    user-select: none;
+  }
+  .taikhoan-btn:active { transform: scale(0.97); }
+  .taikhoan-btn.selected { background: #1a2233; border-color: var(--accent); color: var(--accent); }
+
+  /* INPUT FIELDS */
+  .input-field {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-size: 16px;
+    padding: 14px 16px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.15s;
+    font-family: inherit;
+  }
+  .input-field:focus { border-color: var(--accent); }
+  .input-field::placeholder { color: var(--text-muted); }
+
+  /* DATE TIME ROW */
+  .datetime-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  /* SECTION */
+  .section { display: flex; flex-direction: column; }
+
+  /* SUBMIT */
+  .submit-btn {
+    background: var(--accent);
+    border: none; border-radius: var(--radius);
+    color: #fff;
+    font-size: 17px; font-weight: 700;
+    padding: 17px;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+    width: 100%;
+    margin-top: 4px;
+    letter-spacing: 0.3px;
+  }
+  .submit-btn:active { opacity: 0.85; transform: scale(0.99); }
+  .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: #1e1e1e; border: 1px solid var(--border);
+    border-radius: 20px; padding: 12px 24px;
+    font-size: 14px; font-weight: 500;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    opacity: 0; pointer-events: none; white-space: nowrap;
+    z-index: 200;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  .toast.success { border-color: var(--thu); color: var(--thu); }
+  .toast.error { border-color: var(--chi); color: var(--chi); }
+
+  /* LOADING */
+  .submit-btn .spinner {
+    display: inline-block; width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle; margin-right: 6px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- PIN SCREEN -->
+<div id="pin-screen">
+  <h1>Thu Chi</h1>
+  <p>Nhập mã PIN để tiếp tục</p>
+  <div class="pin-dots">
+    <div class="pin-dot" id="d0"></div>
+    <div class="pin-dot" id="d1"></div>
+    <div class="pin-dot" id="d2"></div>
+    <div class="pin-dot" id="d3"></div>
+  </div>
+  <div class="pin-grid">
+    <button class="pin-btn" onclick="pinPress('1')">1</button>
+    <button class="pin-btn" onclick="pinPress('2')">2</button>
+    <button class="pin-btn" onclick="pinPress('3')">3</button>
+    <button class="pin-btn" onclick="pinPress('4')">4</button>
+    <button class="pin-btn" onclick="pinPress('5')">5</button>
+    <button class="pin-btn" onclick="pinPress('6')">6</button>
+    <button class="pin-btn" onclick="pinPress('7')">7</button>
+    <button class="pin-btn" onclick="pinPress('8')">8</button>
+    <button class="pin-btn" onclick="pinPress('9')">9</button>
+    <button class="pin-btn" onclick="pinPress('')"></button>
+    <button class="pin-btn" onclick="pinPress('0')">0</button>
+    <button class="pin-btn del" onclick="pinDel()">⌫</button>
+  </div>
+  <div class="pin-error" id="pin-error"></div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+  <div class="header">
+    <div class="header-title">Nhập giao dịch</div>
+    <div class="header-time" id="live-time"></div>
+  </div>
+
+  <!-- NGÀY GIỜ -->
+  <div class="section">
+    <div class="section-label">Ngày & Giờ</div>
+    <div class="datetime-row">
+      <input class="input-field" type="text" id="ngay" placeholder="dd/mm/yyyy" maxlength="10">
+      <input class="input-field" type="text" id="thoigian" placeholder="hh:mm" maxlength="5">
+    </div>
+  </div>
+
+  <!-- LOẠI GIAO DỊCH -->
+  <div class="section">
+    <div class="section-label">Loại giao dịch</div>
+    <div class="loai-group">
+      <button class="loai-btn" id="btn-thu" onclick="selectLoai('Thu')">Thu</button>
+      <button class="loai-btn" id="btn-chi" onclick="selectLoai('Chi')">Chi</button>
+      <button class="loai-btn" id="btn-chuyen" onclick="selectLoai('Chuyển')">Chuyển</button>
+    </div>
+  </div>
+
+  <!-- DANH MỤC -->
+  <div class="section">
+    <div class="section-label">Danh mục</div>
+    <div class="danhmuc-grid" id="danhmuc-grid"></div>
+  </div>
+
+  <!-- DIỄN GIẢI -->
+  <div class="section">
+    <div class="section-label">Diễn giải</div>
+    <input class="input-field" type="text" id="diengiai" placeholder="Ăn trưa, xăng xe...">
+  </div>
+
+  <!-- SỐ TIỀN -->
+  <div class="section">
+    <div class="section-label">Số tiền</div>
+    <input class="input-field" type="text" id="sotien" placeholder="0" inputmode="numeric">
+  </div>
+
+  <!-- TÀI KHOẢN -->
+  <div class="section">
+    <div class="section-label">Tài khoản</div>
+    <div class="taikhoan-group">
+      <button class="taikhoan-btn" id="btn-tienmat" onclick="selectTK('Tiền mặt')">💵 Tiền mặt</button>
+      <button class="taikhoan-btn" id="btn-nganhang" onclick="selectTK('Ngân hàng')">🏦 Ngân hàng</button>
+    </div>
+  </div>
+
+  <!-- SUBMIT -->
+  <button class="submit-btn" id="submit-btn" onclick="submitData()">Lưu giao dịch</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// =============================================
+// CẤU HÌNH — chỉnh sửa ở đây khi cần
+// =============================================
+const SHEET_ID = '1J1muDZdke0a4B9_AVC9jS4MzLEo5yb0Af1VzM8-1b0Y';
+const SHEET_TAB = '2026';
+const PIN_CODE = '1224'; // ← ĐỔI PIN Ở ĐÂY
+
+const DANH_MUC = [
+  'Grab – Doanh thu',
+  'Xăng xe',
+  'Ăn uống',
+  'Ăn vặt',
+  'Grab – Nạp vốn',
+  'Mua sắm',
+  'Bảo dưỡng xe',
+  'Chuyển nội bộ',
+  'Trả nợ',
+  'Nhà ở',
+  'Giải trí',
+  'Làm đẹp',
+  'Sinh hoạt',
+  'Y tế',
+  'Nạp điện thoại',
+  'Vay',
+  'Đi lại',
+  'Hiếu hỉ',
+  'Điều chỉnh',
+  'Khác',
+  'Doanh thu',
+];
+
+// Google Apps Script Web App URL — điền vào sau khi deploy
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwujSaKHzMa43GCunv9AuQelsgU4SFmHtkISnzSlNYjoth-joJ_2Zfrx9K0vsRSltW1Ew/exec';
+// =============================================
+
+// STATE
+let selectedLoai = '';
+let selectedDanhMuc = '';
+let selectedTK = '';
+let pinInput = '';
+
+// PIN LOGIC
+function pinPress(val) {
+  if (!val || pinInput.length >= 4) return;
+  pinInput += val;
+  updatePinDots();
+  if (pinInput.length === 4) checkPin();
+}
+function pinDel() {
+  pinInput = pinInput.slice(0, -1);
+  updatePinDots();
+  document.getElementById('pin-error').textContent = '';
+}
+function updatePinDots() {
+  for (let i = 0; i < 4; i++) {
+    document.getElementById('d' + i).classList.toggle('filled', i < pinInput.length);
+  }
+}
+function checkPin() {
+  if (pinInput === PIN_CODE) {
+    document.getElementById('pin-screen').style.display = 'none';
+    document.getElementById('app').classList.add('visible');
+    initApp();
+  } else {
+    document.getElementById('pin-error').textContent = 'Sai PIN, thử lại';
+    pinInput = '';
+    updatePinDots();
+  }
+}
+
+// INIT APP
+function initApp() {
+  setNow();
+  renderDanhMuc();
+  startClock();
+
+  // Format số tiền
+  document.getElementById('sotien').addEventListener('input', function() {
+    let raw = this.value.replace(/\D/g, '');
+    this.value = raw ? parseInt(raw).toLocaleString('vi-VN') : '';
+  });
+}
+
+function setNow() {
+  const now = new Date();
+  const dd = String(now.getDate()).padStart(2, '0');
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const yyyy = now.getFullYear();
+  document.getElementById('ngay').value = `${dd}/${mm}/${yyyy}`;
+
+  const hh = String(now.getHours()).padStart(2, '0');
+  const min = String(now.getMinutes()).padStart(2, '0');
+  document.getElementById('thoigian').value = `${hh}:${min}`;
+}
+
+function startClock() {
+  function tick() {
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, '0');
+    const min = String(now.getMinutes()).padStart(2, '0');
+    document.getElementById('live-time').textContent = `${hh}:${min}`;
+  }
+  tick();
+  setInterval(tick, 10000);
+}
+
+function renderDanhMuc() {
+  const grid = document.getElementById('danhmuc-grid');
+  grid.innerHTML = '';
+  DANH_MUC.forEach(dm => {
+    const btn = document.createElement('button');
+    btn.className = 'danhmuc-btn';
+    btn.textContent = dm;
+    btn.onclick = () => selectDanhMuc(dm, btn);
+    grid.appendChild(btn);
+  });
+}
+
+function selectLoai(val) {
+  selectedLoai = val;
+  ['thu', 'chi', 'chuyen'].forEach(x => document.getElementById('btn-' + x).className = 'loai-btn');
+  const map = { 'Thu': 'active-thu', 'Chi': 'active-chi', 'Chuyển': 'active-chuyen' };
+  const idMap = { 'Thu': 'btn-thu', 'Chi': 'btn-chi', 'Chuyển': 'btn-chuyen' };
+  document.getElementById(idMap[val]).classList.add(map[val]);
+}
+
+function selectDanhMuc(val, btn) {
+  selectedDanhMuc = val;
+  document.querySelectorAll('.danhmuc-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+function selectTK(val) {
+  selectedTK = val;
+  document.getElementById('btn-tienmat').classList.toggle('selected', val === 'Tiền mặt');
+  document.getElementById('btn-nganhang').classList.toggle('selected', val === 'Ngân hàng');
+}
+
+// SUBMIT
+async function submitData() {
+  const ngay = document.getElementById('ngay').value.trim();
+  const thoigian = document.getElementById('thoigian').value.trim();
+  const diengiai = document.getElementById('diengiai').value.trim();
+  const sotienRaw = document.getElementById('sotien').value.replace(/\D/g, '');
+
+  if (!ngay || !thoigian || !selectedLoai || !selectedDanhMuc || !sotienRaw || !selectedTK) {
+    showToast('Điền đủ thông tin trước khi lưu', 'error'); return;
+  }
+
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Đang lưu...';
+
+  const payload = {
+    ngay, thoigian,
+    loaiGiaoDich: selectedLoai,
+    danhMuc: selectedDanhMuc,
+    dienGiai: diengiai,
+    soTien: parseInt(sotienRaw),
+    taiKhoan: selectedTK,
+  };
+
+  try {
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    const result = await res.json();
+    if (result.success) {
+      showToast('✓ Đã lưu vào Google Sheets', 'success');
+      resetForm();
+    } else {
+      throw new Error(result.error || 'Lỗi không xác định');
+    }
+  } catch (e) {
+    showToast('Lỗi: ' + e.message, 'error');
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = 'Lưu giao dịch';
+}
+
+function resetForm() {
+  setNow();
+  selectedLoai = ''; selectedDanhMuc = ''; selectedTK = '';
+  ['thu', 'chi', 'chuyen'].forEach(x => document.getElementById('btn-' + x).className = 'loai-btn');
+  document.querySelectorAll('.danhmuc-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('btn-tienmat').classList.remove('selected');
+  document.getElementById('btn-nganhang').classList.remove('selected');
+  document.getElementById('diengiai').value = '';
+  document.getElementById('sotien').value = '';
+}
+
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + type;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>
