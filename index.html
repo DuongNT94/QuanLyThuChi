@@ -471,13 +471,14 @@ async function submitData() {
   const timeoutId = setTimeout(() => controller.abort(), 15000);
 
   try {
-    const res = await fetch(APPS_SCRIPT_URL, {
+    await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
       mode: 'no-cors', // Ép trình duyệt bắn dữ liệu đi ngay tức thì, bỏ qua bước xác thực CORS rườm rà
       body: JSON.stringify(payload),
       signal: controller.signal
     });
 
+    // Vì dùng 'no-cors', chỉ cần lệnh fetch chạy qua mà không crash/timeout nghĩa là gói tin đã gửi đi thành công.
     clearTimeout(timeoutId);
     showToast('✓ Đã lưu vào Google Sheets', 'success');
     resetForm();
@@ -487,7 +488,7 @@ async function submitData() {
     if (e.name === 'AbortError') {
       showToast('Mạng quá chậm, hãy kiểm tra lại Sheets', 'error');
     } else {
-      showToast('Lỗi: ' + e.message, 'error');
+      showToast('Lỗi kết nối mạng', 'error');
     }
   } finally {
     // Khóa nút bấm thêm 2 giây sau khi gửi xong để ngăn chặn hành vi click liên tục
