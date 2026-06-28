@@ -221,7 +221,6 @@
 </head>
 <body>
 
-<!-- PIN SCREEN -->
 <div id="pin-screen">
   <h1>Thu Chi</h1>
   <p>Nhập mã PIN để tiếp tục</p>
@@ -248,14 +247,12 @@
   <div class="pin-error" id="pin-error"></div>
 </div>
 
-<!-- MAIN APP -->
 <div id="app">
   <div class="header">
     <div class="header-title">Nhập giao dịch</div>
     <div class="header-time" id="live-time"></div>
   </div>
 
-  <!-- NGÀY GIỜ -->
   <div class="section">
     <div class="section-label">Ngày & Giờ</div>
     <div class="datetime-row">
@@ -264,7 +261,6 @@
     </div>
   </div>
 
-  <!-- LOẠI GIAO DỊCH -->
   <div class="section">
     <div class="section-label">Loại giao dịch</div>
     <div class="loai-group">
@@ -274,25 +270,21 @@
     </div>
   </div>
 
-  <!-- DANH MỤC -->
   <div class="section">
     <div class="section-label">Danh mục</div>
     <div class="danhmuc-grid" id="danhmuc-grid"></div>
   </div>
 
-  <!-- DIỄN GIẢI -->
   <div class="section">
     <div class="section-label">Diễn giải</div>
     <input class="input-field" type="text" id="diengiai" placeholder="Ăn trưa, xăng xe...">
   </div>
 
-  <!-- SỐ TIỀN -->
   <div class="section">
     <div class="section-label">Số tiền</div>
     <input class="input-field" type="text" id="sotien" placeholder="0" inputmode="numeric">
   </div>
 
-  <!-- TÀI KHOẢN -->
   <div class="section">
     <div class="section-label">Tài khoản</div>
     <div class="taikhoan-group">
@@ -301,7 +293,6 @@
     </div>
   </div>
 
-  <!-- SUBMIT -->
   <button class="submit-btn" id="submit-btn" onclick="submitData()">Lưu giao dịch</button>
 </div>
 
@@ -313,14 +304,14 @@
 // =============================================
 const SHEET_ID = '1J1muDZdke0a4B9_AVC9jS4MzLEo5yb0Af1VzM8-1b0Y';
 const SHEET_TAB = '2026';
-const PIN_CODE = '1234'; // ← ĐỔI PIN Ở ĐÂY
+const PIN_CODE = '1224'; // ← ĐỔI PIN Ở ĐÂY
 
 const DANH_MUC = [
-  'Grab – Doanh thu',
+  'Grab - Doanh thu',
   'Xăng xe',
   'Ăn uống',
   'Ăn vặt',
-  'Grab – Nạp vốn',
+  'Grab - Nạp vốn',
   'Mua sắm',
   'Bảo dưỡng xe',
   'Chuyển nội bộ',
@@ -340,7 +331,7 @@ const DANH_MUC = [
 ];
 
 // Google Apps Script Web App URL — điền vào sau khi deploy
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxbgmV8BoVnVIjzyNEfYh9lBmHaYjKnJg82yrnvoF1h_DThaQ-fpK3xDEchcgqUKu1auA/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby7gFQ2da6ePIaVjsm3zodLPBnEIASnDaml71mQ7KAy3qdgA4xIO7EMLFLib4usRai0sw/exec';
 // =============================================
 
 // STATE
@@ -348,7 +339,6 @@ let selectedLoai = '';
 let selectedDanhMuc = '';
 let selectedTK = '';
 let pinInput = '';
-let isSubmitting = false; // cờ chống double submit
 
 // PIN LOGIC
 function pinPress(val) {
@@ -449,8 +439,6 @@ function selectTK(val) {
 
 // SUBMIT
 async function submitData() {
-  if (isSubmitting) return; // chặn double submit
-
   const ngay = document.getElementById('ngay').value.trim();
   const thoigian = document.getElementById('thoigian').value.trim();
   const diengiai = document.getElementById('diengiai').value.trim();
@@ -460,9 +448,13 @@ async function submitData() {
     showToast('Điền đủ thông tin trước khi lưu', 'error'); return;
   }
 
-  isSubmitting = true;
   const btn = document.getElementById('submit-btn');
+  
+  // CHỐNG DOUBLE SUBMIT: Nếu nút đã bị vô hiệu hóa thì chặn luồng không chạy tiếp nữa
+  if (btn.disabled) return;
+  
   btn.disabled = true;
+  btn.style.opacity = '0.5';
   btn.innerHTML = '<span class="spinner"></span>Đang lưu...';
 
   const payload = {
@@ -474,30 +466,37 @@ async function submitData() {
     taiKhoan: selectedTK,
   };
 
+  // Thiết lập bộ hủy yêu cầu nếu mạng nghẽn quá 15 giây nhằm chặn trình duyệt tự gửi lại
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 15000);
 
   try {
     await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
-      mode: 'no-cors',
+      mode: 'no-cors', // Ép trình duyệt bắn dữ liệu đi ngay tức thì, bỏ qua bước xác thực CORS rườm rà
       body: JSON.stringify(payload),
-      signal: controller.signal,
+      signal: controller.signal
     });
+
+    // Vì dùng 'no-cors', chỉ cần lệnh fetch chạy qua mà không crash/timeout nghĩa là gói tin đã gửi đi thành công.
     clearTimeout(timeoutId);
     showToast('✓ Đã lưu vào Google Sheets', 'success');
     resetForm();
+
   } catch (e) {
     clearTimeout(timeoutId);
     if (e.name === 'AbortError') {
-      showToast('Mạng chậm — kiểm tra lại Sheets', 'error');
+      showToast('Mạng quá chậm, hãy kiểm tra lại Sheets', 'error');
     } else {
-      showToast('Lỗi kết nối', 'error');
+      showToast('Lỗi kết nối mạng', 'error');
     }
   } finally {
-    isSubmitting = false;
-    btn.disabled = false;
-    btn.innerHTML = 'Lưu giao dịch';
+    // Khóa nút bấm thêm 2 giây sau khi gửi xong để ngăn chặn hành vi click liên tục
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.innerHTML = 'Lưu giao dịch';
+    }, 2000);
   }
 }
 
